@@ -1,0 +1,105 @@
+# ==============================================================================
+# CASO 1: Despliegue solo si un PR ha sido APROBADO y MERGEADO (ACTIVO)
+# ==============================================================================
+name: Deploy to Render (Caso 1: PR Aprobado y Mergeado)
+
+# Se dispara cuando un PR hacia 'main' se cierra
+on:
+  pull_request:
+    types: [closed]
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: Deploy to Render
+    # Condicion 1: Solo se ejecuta si el PR termino en merge (no simplemente cerrado/cancelado)
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-24.04
+    steps:
+      # Condicion 2: Comprueba con GitHub CLI que el PR tuvo review APPROVED formal
+      - name: Verificar aprobacion formal del PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          DECISION=$(gh pr view ${{ github.event.pull_request.number }} --json reviewDecision -q .reviewDecision)
+          if [ "$DECISION" != "APPROVED" ]; then
+            echo "El Pull Request no fue aprobado formalmente por un revisor. Abortando despliegue."
+            exit 1
+          fi
+
+      # Si esta aprobado y mergeado, dispara el hook de Render
+      - name: Trigger Render Deploy Hook
+        env:
+          deploy_url: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+        run: |
+          curl "$deploy_url"
+
+
+# ==============================================================================
+# CASO 2: Despliegue solo si TODAS LAS PRUEBAS han pasado (COMENTADO)
+# ==============================================================================
+# name: Deploy to Render (Caso 2: Tests Pasados)
+# 
+# on:
+#   push:
+#     branches:
+#       - main
+# 
+# jobs:
+#   # Job 1: Ejecucion de pruebas
+#   run-tests:
+#     name: Run Test Suite
+#     runs-on: ubuntu-24.04
+#     steps:
+#       - name: Check out repo
+#         uses: actions/checkout@v4
+# 
+#       - name: Set up Python
+#         uses: actions/setup-python@v5
+#         with:
+#           python-version: '3.12'
+# 
+#       - name: Install dependencies
+#         run: |
+#           python -m pip install --upgrade pip
+#           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+# 
+#       - name: Run Tests
+#         run: |
+#           pytest
+# 
+#   # Job 2: Despliegue condicionado al exito del Job 1
+#   deploy:
+#     name: Deploy to Render
+#     needs: run-tests # 'needs' bloquea el despliegue si 'run-tests' falla
+#     runs-on: ubuntu-24.04
+#     steps:
+#       - name: Trigger Render Deploy Hook
+#         env:
+#           deploy_url: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+#         run: |
+#           curl "$deploy_url"
+
+
+# ==============================================================================
+# CASO 3: Despliegue solo cuando se crea un TAG en GitHub (COMENTADO)
+# ==============================================================================
+# name: Deploy to Render (Caso 3: Push de Tag)
+# 
+# on:
+#   push:
+#     # Solo se activa ante la creacion y push de etiquetas de version (ej. v1.0.0, v2.1.0)
+#     tags:
+#       - 'v*.*.*'
+# 
+# jobs:
+#   deploy:
+#     name: Deploy to Render on Tag
+#     runs-on: ubuntu-24.04
+#     steps:
+#       - name: Trigger Render Deploy Hook
+#         env:
+#           deploy_url: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+#         run: |
+#           curl "$deploy_url"
