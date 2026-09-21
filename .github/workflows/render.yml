@@ -1,9 +1,7 @@
 # ==============================================================================
 # CASO 1: Despliegue solo si un PR ha sido APROBADO y MERGEADO (ACTIVO)
 # ==============================================================================
-name: Deploy to Render (Caso 1: PR Aprobado y Mergeado)
-
-# Se dispara cuando un PR hacia 'main' se cierra
+name: Deploy to Render 
 on:
   pull_request:
     types: [closed]
@@ -39,7 +37,7 @@ jobs:
 # ==============================================================================
 # CASO 2: Despliegue solo si TODAS LAS PRUEBAS han pasado (COMENTADO)
 # ==============================================================================
-# name: Deploy to Render (Caso 2: Tests Pasados)
+# name: Deploy to Render 
 # 
 # on:
 #   push:
