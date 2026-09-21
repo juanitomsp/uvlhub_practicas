@@ -11,6 +11,12 @@ on:
 jobs:
   codacy:
     runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        # 2.- Verificar la compatibilidad del código con las versiones 3.13 y 3.14
+        python-version: ['3.13', '3.14']
+
     services:
       mariadb:
         image: mariadb:12.0.2
@@ -31,16 +37,28 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v5
 
-    - name: Set up Python
+    - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v6
       with:
-        python-version: '3.13'
+        python-version: ${{ matrix.python-version }}
 
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install -e ./rosemary
+
+    # 1.- Verificar si hay nuevas versiones de las dependencias instaladas
+    - name: Check for outdated dependencies
+      run: |
+        echo "=== List of outdated dependencies ==="
+        pip list --outdated || true
+
+    # 3.- Realizar un análisis de seguridad con pip-audit
+    - name: Security audit with pip-audit
+      run: |
+        pip install pip-audit
+        pip-audit || true
 
     - name: Run tests with coverage
       run: |
