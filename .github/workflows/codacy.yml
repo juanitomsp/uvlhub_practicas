@@ -34,45 +34,45 @@ jobs:
           --health-retries=3
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v5
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v6
-      with:
-        python-version: ${{ matrix.python-version }}
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
 
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install -e ./rosemary
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -e ./rosemary
 
-    # 1.- Verificar si hay nuevas versiones de las dependencias instaladas
-    - name: Check for outdated dependencies
-      run: |
-        echo "=== List of outdated dependencies ==="
-        pip list --outdated || true
+      # 1.- Verificar si hay nuevas versiones de las dependencias instaladas
+      - name: Check for outdated dependencies
+        run: |
+          echo "=== List of outdated dependencies ==="
+          pip list --outdated || true
 
-    # 3.- Realizar un análisis de seguridad con pip-audit
-    - name: Security audit with pip-audit
-      run: |
-        pip install pip-audit
-        pip-audit || true
+      # 3.- Realizar un análisis de seguridad con pip-audit
+      - name: Security audit with pip-audit
+        run: |
+          pip install pip-audit
+          pip-audit || true
 
-    - name: Run tests with coverage
-      run: |
-        coverage run -m pytest app/features/ --ignore-glob='*selenium*'
-        coverage xml
-      env:
-        FLASK_ENV: testing
-        MARIADB_HOSTNAME: 127.0.0.1
-        MARIADB_PORT: 3306
-        MARIADB_TEST_DATABASE: uvlhubdb_test
-        MARIADB_USER: uvlhub_user
-        MARIADB_PASSWORD: uvlhub_password
+      - name: Run tests with coverage
+        run: |
+          coverage run -m pytest app/features/ --ignore-glob='*selenium*'
+          coverage xml
+        env:
+          FLASK_ENV: testing
+          MARIADB_HOSTNAME: 127.0.0.1
+          MARIADB_PORT: 3306
+          MARIADB_TEST_DATABASE: uvlhubdb_test
+          MARIADB_USER: uvlhub_user
+          MARIADB_PASSWORD: uvlhub_password
 
-    - name: Upload coverage to Codacy
-      run: bash <(curl -Ls https://coverage.codacy.com/get.sh) report -r coverage.xml
-      env:
-        CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
+      - name: Upload coverage to Codacy
+        run: bash <(curl -Ls https://coverage.codacy.com/get.sh) report -r coverage.xml
+        env:
+          CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
